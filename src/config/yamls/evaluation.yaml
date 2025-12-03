@@ -1,0 +1,67 @@
+# Model Configuration
+model:
+  fine_tuned_path: "data/fine_tuning/20251203_114114/finetuned_qwen3_embedding"     # Path to your fine-tuned model (set to null if only evaluating baseline)
+  baseline_model: "Qwen/Qwen3-Embedding-0.6B"                                       # Baseline model to compare against
+
+# Evaluation Options
+evaluation:
+  # Which models to evaluate
+  evaluate_finetuned: true
+  evaluate_baseline: true
+  compare_models: true                  # Requires both above to be true
+  device: null                          # Options: "cuda", "cpu", or null for auto-detect
+
+# Data Source Configuration
+data_source:
+  use_local_eval_data: false            # Choose one: local_eval_data OR huggingface_dataset
+  use_huggingface_dataset: true         # Choose one: local_eval_data OR huggingface_dataset
+  local_eval_data:                      # Local evaluation data settings     
+    eval_data_dir: null                 # Path to evaluation data directory (null = auto-detect from model_path/eval_data)
+  huggingface_dataset:                  # HuggingFace dataset settings
+    dataset_name: "philschmid/finanical-rag-embedding-dataset"
+    dataset_split: "train"
+    test_size: 0.1
+    anchor_column: "question"           # Column names in the dataset
+    positive_column: "context"          # Column names in the dataset
+    max_samples: null                   # Optional: limit number of samples (null = use all)
+    seed: 42                            # Random seed for reproducibility
+
+# Evaluation Metrics Configuration
+metrics:
+  score_function: "cosine"                # Score function to use. Options: "cosine", "dot"
+  key_metrics:
+    - "ir-eval_cosine_ndcg@10"
+    - "ir-eval_cosine_accuracy@10"
+    - "ir-eval_cosine_mrr@10"
+    - "ir-eval_cosine_precision@10"
+    - "ir-eval_cosine_recall@10"
+  evaluator_name: "ir-eval"               # Evaluator name
+
+# Output Configuration
+output:
+  output_dir: "data/eval_results"         # Output directory for results (null = same as model path or "eval_results")
+  logging:                                # Logging configuration
+    level: "INFO"                         # Log level: DEBUG, INFO, WARNING, ERROR        
+    save_to_file: true                    # Whether to save logs to a file        
+    log_subdir: "logs"                    # Log file directory (relative to output_dir)
+    console_format: "%(asctime)s - %(levelname)s - %(message)s"            # Console output format
+    console_date_format: "%Y-%m-%d %H:%M:%S"                               # Console output format
+    file_format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"    # File output format
+  
+  # Result file naming
+  results:
+    include_timestamp: true                        # Include timestamp in filenames
+    baseline_results: "baseline_results"           # Filename templates
+    finetuned_results: "finetuned_results"         # Filename templates
+    comparison_results: "comparison"               # Filename templates
+
+# Performance Configuration
+performance:
+  clear_cuda_cache: true                        # Memory management
+  force_garbage_collection: true                # Memory management       
+  report_gpu_memory: true                       # Report GPU memory usage
+
+# Advanced Options
+advanced:
+  use_inference_mode: true                # Inference mode settings
+  eval_mode: true                         # Model evaluation mode

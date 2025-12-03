@@ -1,5 +1,7 @@
 *.pyc
 
+.env
+
 archive/
 unsloth_compiled_cache/
 data/

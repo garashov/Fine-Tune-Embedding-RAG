@@ -1,0 +1,145 @@
+# Model Configuration
+model:
+  fine_tuned_path: "data/fine_tuning/20251203_114114/finetuned_qwen3_embedding"   # Path to your fine-tuned model (REQUIRED)
+
+# HuggingFace Hub Configuration
+huggingface_hub:
+  repo_id: "elnurgar/test"                            # Repository ID on HuggingFace Hub (REQUIRED)
+  private: false                                      # Set to true to make the repository private
+  commit_message: null                                # Custom commit message (null for auto-generated timestamp)
+  create_pr: false                                    # Create a Pull Request instead of direct push
+  revision: null                                      # Target branch/revision (null = main/default)
+  metadata:                                           # Repository metadata (optional - for model card generation)
+    description: "Fine-tuned Qwen3-Embedding model for domain-specific embeddings"
+    tags:
+      - sentence-transformers
+      - qwen3
+      - embeddings
+      - fine-tuned
+    language:                 # Language (ISO 639-1 codes)
+      - en
+    license: "apache-2.0"     # Options: apache-2.0, mit, gpl-3.0, etc.
+    tasks:                    # Task categories
+      - sentence-similarity
+      - information-retrieval
+    datasets:
+      - "philschmid/finanical-rag-embedding-dataset"        # Datasets used for training (optional)
+    base_model: "Qwen/Qwen3-Embedding-0.6B"                 # Base model
+
+# Authentication Configuration
+authentication:
+  use_auth_token: true  # Use HuggingFace authentication token
+  token_source: "env"  # Token source: "cli" (from huggingface-cli login) or "env" (from HF_TOKEN env var)
+  token_env_var: "HF_TOKEN" # Environment variable name (only used if token_source is "env")
+
+# Upload Configuration
+upload:
+  max_retries: 3                    # Retry settings for network issues
+  retry_delay_seconds: 5            # Retry settings for network issues
+  upload_timeout: 3600              # Timeout settings (in seconds) for upload
+  show_progress: true               # Show upload progress bar
+  exclude_files:                    # Files to exclude from upload (in addition to defaults)
+    - "*.pyc"
+    - "__pycache__"
+    - ".git"
+    - ".gitignore"
+    - "*.log"
+  use_lfs: true                     # Use Git LFS for large files (>10MB)
+  lfs_threshold_mb: 10              # Files larger than this use LFS
+
+# Model Card Configuration
+model_card:
+  generate_card: true               # Auto-generate model card
+  template: "default"               # Model card template to use. Options: "default", "custom", "minimal"
+  include_sections:                 # Additional sections to include
+    - "model_description"
+    - "intended_uses"
+    - "training_data"
+    - "evaluation_results"
+    - "limitations"
+    - "ethical_considerations"  
+  custom_content:                   # Custom model card content (used if template is "custom")
+    model_description: |
+      This model is a fine-tuned version of Qwen3-Embedding-0.6B, 
+      optimized for domain-specific embedding tasks.
+    intended_uses: |
+      - Semantic search
+      - Document similarity
+      - Information retrieval
+      - Clustering and classification
+    training_procedure: |
+      Fine-tuned using sentence-transformers with contrastive learning
+      on domain-specific data.
+    limitations: |
+      - Optimized for specific domain; may not generalize to all tasks
+      - Best performance with similar text lengths to training data
+    ethical_considerations: |
+      Users should be aware of potential biases inherited from the base model
+      and training data.
+
+
+# Output Configuration
+output:
+  logging:            # Logging configuration
+    level: "INFO"    # Log level: DEBUG, INFO, WARNING, ERROR
+    save_to_file: true    # Save logs to file
+    log_dir: "data/logs"    # Log directory
+    log_filename: "push_to_hub_{timestamp}.log"    # Log filename pattern
+    console_format: "%(asctime)s - %(levelname)s - %(message)s"    # Console output format
+    console_date_format: "%Y-%m-%d %H:%M:%S"    # Console date format
+    file_format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"     # File output format
+  notifications:      # Success/failure notifications
+    enabled: false         # Enable notifications
+    methods:
+      - "console"           # Always print to console. Notification methods: email, slack, webhook
+    email:                  # Email notification settings (if enabled)
+      smtp_server: null
+      smtp_port: 587
+      sender: null
+      recipient: null
+    slack:                     # Slack notification settings (if enabled)
+      webhook_url: null      
+    webhook:                  # Generic webhook settings (if enabled)
+      url: null
+      method: "POST"
+
+# Pre-push Validation
+validation:
+  enabled: true # Enable validation checks before pushing
+  checks:           # Checks to perform
+    - "model_exists"  # Check if model path exists
+    - "model_loadable"  # Check if model can be loaded
+    - "repo_id_valid"  # Check repo ID format
+    - "auth_valid"  # Check authentication
+  strict_mode: false      # Fail on warnings
+  timeout: 300  # Validation timeout (seconds)
+
+# Backup Configuration
+backup:
+  create_backup: false       # Create backup before pushing
+  backup_dir: "data/backups"    # Backup directory
+  backup_name: "{model_name}_backup_{timestamp}"  # Backup naming
+  max_backups: 5      # Keep only N most recent backups
+
+# Post-push Actions
+post_push:
+  actions:                    # Actions to perform after successful push
+    create_manifest: true        # Create a local record/manifest
+    manifest_path: "data/push_history.json"
+    create_local_tag: false            # Tag the model locally
+    tag_name: "pushed_to_hub"
+    cleanup_temp: true                  # Clean up temporary files
+  verify_upload:                     # Verification
+    enabled: true                    # Verify the upload was successful
+    test_download: false             # Try to download and load the model from Hub
+    verify_checksums: true           # Compare checksums
+
+# Advanced Options
+advanced:
+  use_safetensors: true              # Use safe serialization (safetensors)
+  commit_strategy: "single"  # Commit strategy. Options: "single", "multi", "chunked"
+  parallel_uploads: false    # Parallel uploads (for multi-file models)
+  max_workers: 4
+  resume_on_failure: true    # Resume incomplete uploads
+  cache_dir: null  # Cache directory for temporary files. null = use default 
+  force_push: false            # Force push (overwrite existing files)

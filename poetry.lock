@@ -552,6 +552,21 @@ docs = ["pydoctor (>=25.4.0)"]
 test = ["pytest"]
 
 [[package]]
+name = "envyaml"
+version = "1.10.211231"
+description = "Simple YAML configuration file parser with easy access for structured data"
+optional = false
+python-versions = ">=2.7"
+groups = ["main"]
+files = [
+    {file = "envyaml-1.10.211231-py2.py3-none-any.whl", hash = "sha256:8d7a7a6be12587cc5da32a587067506b47b849f4643981099ad148015a72de52"},
+    {file = "envyaml-1.10.211231.tar.gz", hash = "sha256:88f8a076159e3c317d3450a5f404132b6ac91aecee4934ea72eac65f911f1244"},
+]
+
+[package.dependencies]
+PyYAML = "*"
+
+[[package]]
 name = "filelock"
 version = "3.20.0"
 description = "A platform independent file lock."
@@ -4029,4 +4044,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.13"
-content-hash = "4e3794463cdc3f55c98240c3b5e527553669a24049bb9a74ced09c4a179f2ff2"
+content-hash = "856a80e5c87db0eecbbf5c408f8c7149e28f1aa53c6a10b0d3043944f6d80234"
