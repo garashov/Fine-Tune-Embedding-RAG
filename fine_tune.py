@@ -106,7 +106,7 @@ class TrainingConfig:
     logging_steps: int = 10
     
     # Output
-    output_dir: str = f"data/{datetime.now().strftime("%Y%m%d_%H%M%S")}/finetuned_qwen3_embedding"
+    output_dir: str = f"data/fine_tuning/{datetime.now().strftime('%Y%m%d_%H%M%S')}/finetuned_qwen3_embedding"
     run_name: Optional[str] = None
     
     # Misc
@@ -391,6 +391,7 @@ def load_and_prepare_dataset(
         # Create full corpus for evaluation
         corpus_dataset = concatenate_datasets([train_dataset, test_dataset])
         
+        # Save test dataset for later evaluation
         return train_dataset, test_dataset, corpus_dataset
         
     except Exception as e:
@@ -447,6 +448,31 @@ def create_evaluator(
     except Exception as e:
         logger.error(f"Failed to create evaluator: {str(e)}")
         raise
+
+
+def save_evaluation_data(
+    output_dir: Path,
+    test_dataset: Dataset,
+    corpus_dataset: Dataset,
+    logger: logging.Logger
+):
+    """
+    Save test and corpus data for later evaluation
+    
+    Args:
+        output_dir: Output directory
+        test_dataset: Test dataset
+        corpus_dataset: Full corpus dataset
+        logger: Logger instance
+    """
+    eval_data_dir = output_dir / "eval_data"
+    eval_data_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Save datasets
+    test_dataset.save_to_disk(str(eval_data_dir / "test_dataset"))
+    corpus_dataset.save_to_disk(str(eval_data_dir / "corpus_dataset"))
+    
+    logger.info(f"Evaluation data saved to: {eval_data_dir}")
 
 
 # ============================================================================
@@ -594,98 +620,6 @@ def save_configuration(
 
 
 # ============================================================================
-# Evaluation
-# ============================================================================
-def evaluate_models(
-    original_model_id: str,
-    fine_tuned_model_path: Path,
-    evaluator: InformationRetrievalEvaluator,
-    logger: logging.Logger
-) -> Dict[str, float]:
-    """
-    Evaluate both original and fine-tuned models
-    
-    Args:
-        original_model_id: ID of the original model
-        fine_tuned_model_path: Path to fine-tuned model
-        evaluator: Evaluator instance
-        logger: Logger instance
-    
-    Returns:
-        Dictionary with evaluation results
-    """
-    logger.info("=" * 80)
-    logger.info("EVALUATION")
-    logger.info("=" * 80)
-    
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    
-    try:
-        # Load original model
-        logger.info(f"Loading original model: {original_model_id}")
-        original_model = SentenceTransformer(original_model_id, device=device)
-        original_model.eval()
-        
-        # Load fine-tuned model
-        logger.info(f"Loading fine-tuned model from: {fine_tuned_model_path}")
-        fine_tuned_model = SentenceTransformer(str(fine_tuned_model_path), device=device)
-        fine_tuned_model.eval()
-        
-        # Evaluate both models
-        logger.info("Evaluating original model...")
-        with torch.inference_mode():
-            baseline_results = evaluator(original_model)
-        
-        logger.info("Evaluating fine-tuned model...")
-        with torch.inference_mode():
-            fine_tuned_results = evaluator(fine_tuned_model)
-        
-        # Calculate improvements
-        improvements = {}
-        for key in baseline_results:
-            if key in fine_tuned_results:
-                baseline_val = baseline_results[key]
-                finetuned_val = fine_tuned_results[key]
-                improvement = ((finetuned_val - baseline_val) / baseline_val) * 100
-                improvements[key] = {
-                    "baseline": baseline_val,
-                    "fine_tuned": finetuned_val,
-                    "improvement_percent": improvement
-                }
-        
-        # Log key metrics
-        logger.info("\n" + "=" * 80)
-        logger.info("EVALUATION RESULTS")
-        logger.info("=" * 80)
-        
-        key_metrics = [
-            "ir-eval_cosine_ndcg@10",
-            "ir-eval_cosine_accuracy@10",
-            "ir-eval_cosine_mrr@10"
-        ]
-        
-        for metric in key_metrics:
-            if metric in improvements:
-                info = improvements[metric]
-                logger.info(f"\n{metric}:")
-                logger.info(f"  Baseline:    {info['baseline']:.4f}")
-                logger.info(f"  Fine-tuned:  {info['fine_tuned']:.4f}")
-                logger.info(f"  Improvement: {info['improvement_percent']:+.2f}%")
-        
-        # Save results
-        results_path = fine_tuned_model_path / "evaluation_results.json"
-        with open(results_path, 'w') as f:
-            json.dump(improvements, f, indent=2)
-        logger.info(f"\nFull results saved to: {results_path}")
-        
-        return improvements
-        
-    except Exception as e:
-        logger.error(f"Evaluation failed: {str(e)}")
-        raise
-
-
-# ============================================================================
 # Main Training Pipeline
 # ============================================================================
 
@@ -696,7 +630,7 @@ def main():
     model_config = ModelConfig()
     lora_config = LoRAConfig()
     training_config = TrainingConfig(
-        num_train_epochs = 0.1,
+        num_train_epochs=0.1,
         per_device_train_batch_size=16,
         per_device_eval_batch_size=32,
         gradient_accumulation_steps=8,
@@ -757,6 +691,9 @@ def main():
             data_config, logger
         )
         
+        # Save evaluation data for later use
+        save_evaluation_data(output_dir, test_dataset, corpus_dataset, logger)
+        
         # 5. Create evaluator
         logger.info("\n" + "=" * 80)
         logger.info("STEP 5: CREATING EVALUATOR")
@@ -811,17 +748,6 @@ def main():
         sbert_model.save_pretrained(str(output_dir))
         logger.info(f"Model saved to: {output_dir}")
         
-        # 11. Evaluate
-        logger.info("\n" + "=" * 80)
-        logger.info("STEP 11: FINAL EVALUATION")
-        logger.info("=" * 80)
-        improvements = evaluate_models(
-            model_config.base_model_id,
-            output_dir,
-            evaluator,
-            logger
-        )
-        
         # Final summary
         logger.info("\n" + "=" * 80)
         logger.info("TRAINING COMPLETE")
@@ -829,10 +755,10 @@ def main():
         logger.info(f"Fine-tuned model saved to: {output_dir}")
         logger.info(f"Logs saved to: {log_dir}")
         logger.info(f"Training configuration saved to: {output_dir / 'training_config.json'}")
-        logger.info(f"Evaluation results saved to: {output_dir / 'evaluation_results.json'}")
-        logger.info("\nTo use your fine-tuned model:")
-        logger.info(f"  from sentence_transformers import SentenceTransformer")
-        logger.info(f"  model = SentenceTransformer('{output_dir}')")
+        logger.info(f"Evaluation data saved to: {output_dir / 'eval_data'}")
+        logger.info("\nNext steps:")
+        logger.info(f"  1. Run evaluation: python evaluate_qwen3_embedding.py --model-path {output_dir}")
+        logger.info(f"  2. Compare with baseline: python evaluate_qwen3_embedding.py --model-path {output_dir} --compare")
         
     except Exception as e:
         logger.error(f"\n{'=' * 80}")
