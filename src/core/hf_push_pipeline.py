@@ -150,7 +150,7 @@ class PushPipeline:
             return result
             
         except Exception as e:
-            self.logger.error("\n" + "=" * 80)
+            self.logger.error("=" * 80)
             self.logger.error("PUSH PIPELINE FAILED")
             self.logger.error("=" * 80)
             self.logger.error(f"Error: {str(e)}", exc_info=True)
@@ -191,7 +191,7 @@ class PushPipeline:
     
     def _log_completion(self, result: PushResult) -> None:
         """Log completion message"""
-        self.logger.info("\n" + "=" * 80)
+        self.logger.info("=" * 80)
         if result.success:
             self.logger.info("[OK] PUSH PIPELINE COMPLETED SUCCESSFULLY")
         else:

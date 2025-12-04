@@ -42,7 +42,7 @@ class ModelComparator:
         Returns:
             ComparisonResults object with detailed comparison
         """
-        self.logger.info("\n" + "=" * 80)
+        self.logger.info("=" * 80)
         self.logger.info("COMPARISON: BASELINE vs FINE-TUNED")
         self.logger.info("=" * 80)
         

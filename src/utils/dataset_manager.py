@@ -38,7 +38,7 @@ class DatasetManager:
         Returns:
             Tuple of (train_dataset, test_dataset, corpus_dataset)
         """
-        self.logger.info("\n" + "=" * 80)
+        self.logger.info("=" * 80)
         self.logger.info("LOADING DATASET")
         self.logger.info("=" * 80)
         self.logger.info(f"Dataset: {FT_DATASET_DATASET_NAME}")

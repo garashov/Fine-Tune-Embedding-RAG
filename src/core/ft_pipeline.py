@@ -11,15 +11,16 @@ This module provides a robust fine-tuning framework with:
 """
 import warnings
 warnings.filterwarnings('ignore', message='Unexpected key')
+warnings.filterwarnings('ignore', message='Failed to find')
+
+# Unsloth imports must be first to avoid conflicts
+from src.utils.model_loader import ModelLoader
 
 from pathlib import Path
 from datetime import datetime
 from sentence_transformers import SentenceTransformerTrainer
-from sentence_transformers.util import cos_sim
-from sentence_transformers.evaluation import InformationRetrievalEvaluator
 
 from src.utils.logging import FinetuningLogger
-from src.utils.model_loader import ModelLoader
 from src.utils.loss_factory import LossFactory
 from src.utils.data_models import TrainingMetrics
 from src.utils. hardware_utils import HardwareManager
@@ -145,7 +146,7 @@ class FineTuningPipeline:
             )
             
             # Step 5: Create evaluator
-            self.logger.info("\n" + "=" * 80)
+            self.logger.info("=" * 80)
             self.logger.info("CREATING EVALUATOR")
             self.logger.info("=" * 80)
             # Use the static method that accepts datasets directly
@@ -178,7 +179,7 @@ class FineTuningPipeline:
             args, callbacks = self.training_args_builder.build(self.output_dir, loss, evaluator)
             
             # Step 8: Initialize trainer
-            self.logger.info("\n" + "=" * 80)
+            self.logger.info("=" * 80)
             self.logger.info("INITIALIZING TRAINER")
             self.logger.info("=" * 80)
             
@@ -194,13 +195,13 @@ class FineTuningPipeline:
             self.logger.info("[OK] Trainer initialized")
             
             # Step 9: Train
-            self.logger.info("\n" + "=" * 80)
+            self.logger.info("=" * 80)
             self.logger.info("STARTING TRAINING")
             self.logger.info("=" * 80)
             
             train_result = trainer.train()
             
-            self.logger.info("\n" + "=" * 80)
+            self.logger.info("=" * 80)
             self.logger.info("TRAINING COMPLETE")
             self.logger.info("=" * 80)
             
@@ -220,7 +221,7 @@ class FineTuningPipeline:
             
             # Step 10: Save model
             if FT_POST_TRAINING_SAVE_FINAL_MODEL:
-                self.logger.info("\n" + "=" * 80)
+                self.logger.info("=" * 80)
                 self.logger.info("SAVING FINAL MODEL")
                 self.logger.info("=" * 80)
                 sbert_model.save_pretrained(str(self.output_dir))
@@ -242,7 +243,7 @@ class FineTuningPipeline:
             return metrics
             
         except Exception as e:
-            self.logger.error("\n" + "=" * 80)
+            self.logger.error("=" * 80)
             self.logger.error("TRAINING FAILED")
             self.logger.error("=" * 80)
             self.logger.error(f"Error: {str(e)}", exc_info=True)
@@ -255,14 +256,13 @@ class FineTuningPipeline:
     
     def _log_summary(self) -> None:
         """Log training summary"""
-        self.logger.info("\n" + "=" * 80)
+        self.logger.info("=" * 80)
         self.logger.info("TRAINING SUMMARY")
         self.logger.info("=" * 80)
         self.logger.info(f"Output directory: {self.output_dir}")
         self.logger.info(f"Model saved: {FT_POST_TRAINING_SAVE_FINAL_MODEL}")
         self.logger.info(f"Evaluation data saved: {FT_EVALUATION_SAVE_EVAL_DATA}")
         self.logger.info("\nNext steps:")
-        self.logger.info(f"  1. Evaluate model: python scripts/evaluate.py")
-        self.logger.info(f"  2. Compare with baseline")
+        self.logger.info(f"  1. Evaluate model and compare with baseline: python evaluate.py")
         if FT_POST_TRAINING_UPLOAD_TO_HUB and FT_POST_TRAINING_HUB_REPO_ID:
             self.logger.info(f"  3. Upload to Hub: python scripts/push_to_hub.py")

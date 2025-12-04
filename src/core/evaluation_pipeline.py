@@ -232,7 +232,7 @@ class EvaluationPipeline:
             return results
             
         except Exception as e:
-            self.logger.error("\n" + "=" * 80)
+            self.logger.error("=" * 80)
             self.logger.error("EVALUATION FAILED")
             self.logger.error("=" * 80)
             self.logger.error(f"Error: {str(e)}", exc_info=True)
@@ -240,7 +240,7 @@ class EvaluationPipeline:
     
     def _log_summary(self, comparison: ComparisonResults) -> None:
         """Log quick summary of comparison results"""
-        self.logger.info("\n" + "=" * 80)
+        self.logger.info("=" * 80)
         self.logger.info("QUICK SUMMARY")
         self.logger.info("=" * 80)
         
@@ -254,7 +254,7 @@ class EvaluationPipeline:
     
     def _log_completion(self) -> None:
         """Log completion message"""
-        self.logger.info("\n" + "=" * 80)
+        self.logger.info("=" * 80)
         self.logger.info("EVALUATION COMPLETE")
         self.logger.info("=" * 80)
         self.logger.info(f"Results directory: {self.output_dir}")

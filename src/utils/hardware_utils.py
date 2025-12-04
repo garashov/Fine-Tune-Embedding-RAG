@@ -36,7 +36,7 @@ class HardwareManager:
     
     def log_hardware_info(self) -> None:
         """Log hardware information"""
-        self.logger.info("\n" + "=" * 80)
+        self.logger.info("=" * 80)
         self.logger.info("HARDWARE INFORMATION")
         self.logger.info("=" * 80)
         self.logger.info(f"Platform: {platform.system()} {platform.release()}")

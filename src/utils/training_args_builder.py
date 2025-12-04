@@ -86,7 +86,7 @@ class TrainingArgumentsBuilder:
         Returns:
             Tuple of (training arguments, list of callbacks)
         """
-        self.logger.info("\n" + "=" * 80)
+        self.logger.info("=" * 80)
         self.logger.info("CREATING TRAINING ARGUMENTS")
         self.logger.info("=" * 80)
         

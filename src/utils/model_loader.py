@@ -1,4 +1,3 @@
-
 import unsloth                  
 from unsloth import FastModel
 
@@ -46,7 +45,7 @@ class ModelLoader:
         Returns:
             Tuple of (model, tokenizer)
         """
-        self.logger.info("\n" + "=" * 80)
+        self.logger.info("=" * 80)
         self.logger.info("LOADING BASE MODEL")
         self.logger.info("=" * 80)
         self.logger.info(f"Model: {FT_MODEL_BASE_MODEL_ID}")
@@ -83,7 +82,7 @@ class ModelLoader:
         Returns:
             Model with LoRA adapters attached
         """
-        self.logger.info("\n" + "=" * 80)
+        self.logger.info("=" * 80)
         self.logger.info("ATTACHING LORA ADAPTERS")
         self.logger.info("=" * 80)
         self.logger.info(f"LoRA rank: {FT_LORA_R}")
@@ -150,7 +149,7 @@ class ModelLoader:
         Returns:
             SentenceTransformer model ready for training
         """
-        self.logger.info("\n" + "=" * 80)
+        self.logger.info("=" * 80)
         self.logger.info("CREATING SENTENCE TRANSFORMER WRAPPER")
         self.logger.info("=" * 80)
         

@@ -31,7 +31,7 @@ class LossFactory:
         Returns:
             Configured loss function
         """
-        self.logger.info("\n" + "=" * 80)
+        self.logger.info("=" * 80)
         self.logger.info("CREATING LOSS FUNCTION")
         self.logger.info("=" * 80)
         self.logger.info(f"Loss type: {FT_LOSS_TYPE}")

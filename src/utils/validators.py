@@ -55,7 +55,7 @@ class PushValidator:
             self.logger.info("Validation disabled, skipping checks")
             return []
         
-        self.logger.info("\n" + "=" * 80)
+        self.logger.info("=" * 80)
         self.logger.info("VALIDATION CHECKS")
         self.logger.info("=" * 80)
         

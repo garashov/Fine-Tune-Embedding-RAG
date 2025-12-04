@@ -40,6 +40,7 @@ class FinetuningLogger:
         self.logger = logging.getLogger(name)
         self.logger.setLevel(getattr(logging, log_level.upper()))
         self.logger.handlers.clear()
+        self.logger.propagate = False
         
         # Console handler
         self._setup_console_handler(console_format, console_date_format)

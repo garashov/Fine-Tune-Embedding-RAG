@@ -57,7 +57,7 @@ class HubPusher:
         Returns:
             PushResult with operation details
         """
-        self.logger.info("\n" + "=" * 80)
+        self.logger.info("=" * 80)
         self.logger.info("PUSHING TO HUGGINGFACE HUB")
         self.logger.info("=" * 80)
         self.logger.info(f"Repository: {repo_id}")
@@ -112,7 +112,7 @@ class HubPusher:
                 
                 duration = time.time() - start_time
                 
-                self.logger.info("\n" + "=" * 80)
+                self.logger.info("=" * 80)
                 self.logger.info("[OK] UPLOAD SUCCESSFUL")
                 self.logger.info("=" * 80)
                 
@@ -141,7 +141,7 @@ class HubPusher:
                     time.sleep(self.retry_delay)
                 else:
                     duration = time.time() - start_time
-                    self.logger.error("\n" + "=" * 80)
+                    self.logger.error("=" * 80)
                     self.logger.error("[FAIL] UPLOAD FAILED")
                     self.logger.error("=" * 80)
                     self._log_common_issues()
