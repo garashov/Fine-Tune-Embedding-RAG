@@ -45,17 +45,17 @@ training:
   max_grad_norm: 1.0
   # Evaluation and checkpointing
   eval_strategy: "steps"  # Options: "no", "steps", "epoch"
-  eval_steps: 4  # Evaluate every N steps
+  eval_steps: 50  # Evaluate every N steps
   eval_delay: 0  # Delay evaluation for N steps
   save_strategy: "steps"  # Options: "no", "steps", "epoch"
-  save_steps: 4  # Save checkpoint every N steps
+  save_steps: 50  # Save checkpoint every N steps
   save_total_limit: 3  # Keep only N most recent checkpoints
   # Best model tracking
   load_best_model_at_end: true
   metric_for_best_model: "eval_ir-eval_cosine_ndcg@10"
   greater_is_better: true
   # Logging
-  logging_steps: 2
+  logging_steps: 20
   logging_first_step: true
   logging_strategy: "steps"
   # Output and reporting
