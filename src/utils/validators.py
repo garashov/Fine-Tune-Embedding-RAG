@@ -96,7 +96,7 @@ class PushValidator:
                 "Resolve warnings or disable strict mode."
             )
         
-        self.logger.info("\n✓ All validation checks passed")
+        self.logger.info("\n[OK] All validation checks passed")
         return results
     
     def _check_model_exists(self, model_path: Path) -> ValidationResult:

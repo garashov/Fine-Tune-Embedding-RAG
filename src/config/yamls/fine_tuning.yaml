@@ -1,0 +1,243 @@
+# Model Configuration
+model:
+  base_model_id: "Qwen/Qwen3-Embedding-0.6B"              # Base model identifier from HuggingFace Hub
+  max_seq_length: 512    # Maximum input sequence length
+  load_in_4bit: true  # Use 4-bit quantization for memory efficiency
+  trust_remote_code: true  # Required for Qwen models
+  dtype: null  # Options: null (auto), "float16", "bfloat16", "float32"
+  device_map: "auto"  # Options: "auto", "cuda:0", "cpu"
+
+# LoRA/QLoRA Configuration
+lora:
+  r: 16  # LoRA rank - controls adapter size and expressiveness. Common values: 8, 16, 32, 64
+  lora_alpha: 32  # LoRA alpha - scaling factor for adapter weights. Typically 2x the rank
+  lora_dropout: 0.0  # Dropout for LoRA layers. Range: 0.0 - 0.3
+  use_rslora: false  # Use Rank-Stabilized LoRA (RSLoRA)
+  target_modules:  # Target modules for LoRA adaptation
+    - "q_proj"
+    - "k_proj"
+    - "v_proj"
+    - "o_proj"
+  exclude_modules: []    # Modules to exclude from LoRA
+  bias: "none"  # Bias handling. Options: "none", "all", "lora_only"
+  task_type: "FEATURE_EXTRACTION"
+  use_gradient_checkpointing: "unsloth"  # Gradient checkpointing Options: "unsloth", true, false
+  modules_to_save: null  # Modules to save (in addition to LoRA). null or list of module names
+
+# Training Configuration
+training:         
+  # Core training parameters  
+  num_train_epochs: 4              
+  per_device_train_batch_size: 16
+  per_device_eval_batch_size: 32
+  gradient_accumulation_steps: 8
+  # Learning rate settings
+  learning_rate: 0.0002  # 2e-4
+  lr_scheduler_type: "cosine"  # Options: "linear", "cosine", "constant", "polynomial"
+  warmup_ratio: 0.1  # Proportion of training for warmup
+  warmup_steps: null  # Alternative to warmup_ratio (null = use ratio)
+  # Optimizer settings
+  optimizer: "adamw_torch_fused"  # Options: "adamw_torch", "adamw_torch_fused", "adamw_8bit", "sgd"
+  weight_decay: 0.1
+  adam_beta1: 0.9
+  adam_beta2: 0.999
+  adam_epsilon: 1.0e-8
+  max_grad_norm: 1.0
+  # Evaluation and checkpointing
+  eval_strategy: "steps"  # Options: "no", "steps", "epoch"
+  eval_steps: 4  # Evaluate every N steps
+  eval_delay: 0  # Delay evaluation for N steps
+  save_strategy: "steps"  # Options: "no", "steps", "epoch"
+  save_steps: 4  # Save checkpoint every N steps
+  save_total_limit: 3  # Keep only N most recent checkpoints
+  # Best model tracking
+  load_best_model_at_end: true
+  metric_for_best_model: "eval_ir-eval_cosine_ndcg@10"
+  greater_is_better: true
+  # Logging
+  logging_steps: 2
+  logging_first_step: true
+  logging_strategy: "steps"
+  # Output and reporting
+  output_dir: "data/fine_tuning/{timestamp}/finetuned_qwen3_embedding"
+  run_name: null  # null for auto-generated name
+  report_to:
+    - "tensorboard"
+  # Reproducibility
+  seed: 42
+  data_seed: null  # null = use same as seed
+  # Performance optimization
+  dataloader_num_workers: 0  # Set to 0 for Windows
+  dataloader_pin_memory: true
+  dataloader_prefetch_factor: null   # Must be null when num_workers=0
+  # Batch sampler
+  batch_sampler: "NO_DUPLICATES"  # Options: "NO_DUPLICATES", "GROUP_BY_LABEL", "BATCH_SAMPLER"
+  # Mixed precision training
+  fp16: null  # null for auto-detection
+  bf16: null  # null for auto-detection
+  tf32: true  # Use TensorFloat32 on Ampere+ GPUs
+  fp16_full_eval: true
+  # Memory optimization
+  auto_find_batch_size: false  # Auto-reduce batch size on OOM
+  gradient_checkpointing: false  # Use training.lora.use_gradient_checkpointing instead
+  # Advanced options
+  include_inputs_for_metrics: false
+  label_smoothing_factor: 0.0
+  prediction_loss_only: false
+
+# Dataset Configuration
+dataset:
+  # Dataset source
+  dataset_name: "philschmid/finanical-rag-embedding-dataset"
+  dataset_split: "train"
+  # Train/test split
+  test_size: 0.1  # Proportion for test set
+  # Column mapping
+  anchor_column: "question"  # Column containing queries/anchors
+  positive_column: "context"  # Column containing positive examples
+  # Data preprocessing
+  shuffle_train: true
+  shuffle_seed: 42
+  # Optional data limits (for testing)
+  max_train_samples: null  # null = use all
+  max_eval_samples: null  # null = use all
+  # Caching
+  cache_dir: null  # null = use default HF cache
+  keep_in_memory: false  # Load entire dataset into memory
+
+# Loss Function Configuration
+loss:
+  # Loss function type
+  type: "MultipleNegativesRankingLoss"  # Options: "MultipleNegativesRankingLoss", "CosineSimilarityLoss", etc.
+  # MultipleNegativesRankingLoss settings
+  mnrl:
+    scale: 20.0  # Temperature scaling
+    similarity_fct: "cos_sim"  # Similarity function
+  # CosineSimilarityLoss settings (if used)
+  cosine:
+    loss_fct: "mse"  # Options: "mse", "mae"
+
+# Evaluation Configuration
+evaluation:
+  # Evaluator type
+  evaluator_type: "InformationRetrievalEvaluator"
+  # Information Retrieval Evaluator settings
+  ir_evaluator:
+    score_function: "cosine"  # Options: "cosine", "dot"
+    # Metrics to compute
+    metrics:
+      - "ndcg@10"
+      - "accuracy@10"
+      - "mrr@10"
+      - "precision@10"
+      - "recall@10"
+    # Evaluation name
+    name: "ir-eval"
+    # Save corpus and queries for later evaluation
+    save_corpus: true
+    save_queries: true
+  # Save evaluation data
+  save_eval_data: true
+  eval_data_subdir: "eval_data"
+
+# Output Configuration
+output:
+  # Directory structure
+  create_subdirs: true
+  subdirs:
+    - "logs"
+    - "checkpoints"
+    - "eval_data"
+    - "visualizations"
+  # Logging configuration
+  logging:
+    level: "INFO"  # Options: "DEBUG", "INFO", "WARNING", "ERROR"
+    save_to_file: true
+    log_filename: "training_{timestamp}.log"
+    console_format: "%(asctime)s - %(levelname)s - %(message)s"
+    console_date_format: "%Y-%m-%d %H:%M:%S"
+    file_format: "%(asctime)s - %(name)s - %(levelname)s - %(funcName)s:%(lineno)d - %(message)s"
+  # Save configuration
+  save_config: true
+  config_filename: "training_config.json"
+  # Save training metrics
+  save_metrics: true
+  metrics_filename: "training_metrics.json"
+  # Save model information
+  save_model_info: true
+  model_info_filename: "model_info.json"
+
+# Hardware Configuration
+hardware:
+  # GPU settings
+  cuda_visible_devices: null  # null = use all, or "0,1,2" for specific GPUs
+  # Multi-GPU training
+  use_multi_gpu: false
+  local_rank: -1
+  # Memory management
+  empty_cuda_cache_steps: null  # Empty cache every N steps (null = never)
+  max_memory: null  # Max memory per GPU (e.g., "20GB")
+  # CPU settings
+  num_threads: null  # null = auto
+
+# Monitoring and Debugging
+monitoring:
+  # Progress tracking
+  show_progress_bar: true
+  # Memory monitoring
+  log_memory_usage: true
+  memory_log_interval: 100  # Log every N steps
+  # Model monitoring
+  log_model_stats: true
+  model_stats_interval: 100  # Log every N steps
+  # Gradient monitoring
+  log_gradient_norm: false
+  # Early stopping
+  early_stopping:
+    enabled: true
+    patience: 3  # Number of evaluations without improvement
+    min_delta: 0.0001  # Minimum change to qualify as improvement
+
+# Post-Training Actions
+post_training:
+  # Model saving
+  save_final_model: true
+  save_merged_model: false  # Save model with LoRA weights merged
+  # Model upload
+  upload_to_hub: false
+  hub_repo_id: null  # HuggingFace Hub repository ID
+  hub_private: false
+  # Evaluation
+  run_final_evaluation: true
+  compare_with_baseline: false
+  baseline_model: "Qwen/Qwen3-Embedding-0.6B"
+  # Cleanup
+  delete_checkpoints: false  # Delete intermediate checkpoints
+  keep_best_checkpoint: true
+
+# Advanced Options
+advanced:
+  # Unsloth-specific optimizations
+  unsloth:
+    use_unsloth: true
+    max_seq_length_optimization: true
+  # Distributed training
+  distributed:
+    enabled: false
+    backend: "nccl"  # Options: "nccl", "gloo"
+    find_unused_parameters: false
+  # Compilation (PyTorch 2.0+)
+  torch_compile: false
+  torch_compile_backend: "inductor"
+  torch_compile_mode: null  # Options: null, "default", "reduce-overhead", "max-autotune"
+  # Profiling
+  profiling:
+    enabled: false
+    profile_memory: true
+    profile_steps: 10
+    output_dir: "profiling"
+  # Debug options
+  debug:
+    enabled: false
+    debug_overflow: false
+    debug_underflow: false

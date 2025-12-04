@@ -80,7 +80,7 @@ class HubPusher:
         try:
             self.logger.info("\nLoading model...")
             model = SentenceTransformer(str(model_path))
-            self.logger.info("✓ Model loaded successfully")
+            self.logger.info("[OK] Model loaded successfully")
         except Exception as e:
             return PushResult(
                 repo_id=repo_id,
@@ -113,7 +113,7 @@ class HubPusher:
                 duration = time.time() - start_time
                 
                 self.logger.info("\n" + "=" * 80)
-                self.logger.info("✓ UPLOAD SUCCESSFUL")
+                self.logger.info("[OK] UPLOAD SUCCESSFUL")
                 self.logger.info("=" * 80)
                 
                 commit_url = f"https://huggingface.co/{repo_id}"
@@ -142,7 +142,7 @@ class HubPusher:
                 else:
                     duration = time.time() - start_time
                     self.logger.error("\n" + "=" * 80)
-                    self.logger.error("✗ UPLOAD FAILED")
+                    self.logger.error("[FAIL] UPLOAD FAILED")
                     self.logger.error("=" * 80)
                     self._log_common_issues()
                     
@@ -161,7 +161,7 @@ class HubPusher:
             card_path = model_path / "README.md"
             with open(card_path, 'w') as f:
                 f.write(content)
-            self.logger.info(f"✓ Model card saved: {card_path}")
+            self.logger.info(f"[OK] Model card saved: {card_path}")
         except Exception as e:
             self.logger.warning(f"Failed to save model card: {str(e)}")
     

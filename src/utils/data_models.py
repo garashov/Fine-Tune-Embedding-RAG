@@ -1,48 +1,60 @@
 import json
 from pathlib import Path
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 from dataclasses import dataclass, asdict
 
+
 # ============================================================================
-# HF Push Data Models
+# Evalaution Data Models
 # ============================================================================
 @dataclass
-class PushResult:
-    """Container for push operation results with metadata"""
-    repo_id: str
-    model_path: str
-    success: bool
-    timestamp: str
-    commit_url: Optional[str] = None
-    error_message: Optional[str] = None
-    duration_seconds: Optional[float] = None
+class TrainingMetrics:
+    """Container for training metrics and results"""
+    train_runtime: float
+    train_samples_per_second: float
+    train_steps_per_second: float
+    total_flos: float
+    train_loss: float
+    epoch: float
+    best_metric: Optional[float] = None
+    best_model_checkpoint: Optional[str] = None
     
     def to_dict(self) -> Dict:
         """Convert to dictionary for serialization"""
         return asdict(self)
     
     def save(self, filepath: Path) -> None:
-        """Save results to JSON file"""
+        """Save metrics to JSON file"""
+        filepath.parent.mkdir(parents=True, exist_ok=True)
+        with open(filepath, 'w') as f:
+            json.dump(self.to_dict(), f, indent=2)
+
+@dataclass
+class ModelInfo:
+    """Container for model information"""
+    base_model: str
+    total_parameters: int
+    trainable_parameters: int
+    trainable_percentage: float
+    lora_rank: int
+    lora_alpha: int
+    target_modules: List[str]
+    timestamp: str
+    device: str
+    
+    def to_dict(self) -> Dict:
+        """Convert to dictionary for serialization"""
+        return asdict(self)
+    
+    def save(self, filepath: Path) -> None:
+        """Save model info to JSON file"""
         filepath.parent.mkdir(parents=True, exist_ok=True)
         with open(filepath, 'w') as f:
             json.dump(self.to_dict(), f, indent=2)
 
 
-@dataclass
-class ValidationResult:
-    """Container for validation check results"""
-    check_name: str
-    passed: bool
-    message: str
-    is_warning: bool = False
-    
-    def __str__(self) -> str:
-        status = "✓" if self.passed else ("⚠" if self.is_warning else "✗")
-        return f"{status} {self.check_name}: {self.message}"
-
-
 # ============================================================================
-# Evalaution Data Models
+# Evaluation Data Models
 # ============================================================================
 @dataclass
 class EvaluationResults:
@@ -94,3 +106,41 @@ class ComparisonResults:
         filepath.parent.mkdir(parents=True, exist_ok=True)
         with open(filepath, 'w') as f:
             json.dump(self.to_dict(), f, indent=2)
+
+
+# ============================================================================
+# HF Push Data Models
+# ============================================================================
+@dataclass
+class PushResult:
+    """Container for push operation results with metadata"""
+    repo_id: str
+    model_path: str
+    success: bool
+    timestamp: str
+    commit_url: Optional[str] = None
+    error_message: Optional[str] = None
+    duration_seconds: Optional[float] = None
+    
+    def to_dict(self) -> Dict:
+        """Convert to dictionary for serialization"""
+        return asdict(self)
+    
+    def save(self, filepath: Path) -> None:
+        """Save results to JSON file"""
+        filepath.parent.mkdir(parents=True, exist_ok=True)
+        with open(filepath, 'w') as f:
+            json.dump(self.to_dict(), f, indent=2)
+
+
+@dataclass
+class ValidationResult:
+    """Container for validation check results"""
+    check_name: str
+    passed: bool
+    message: str
+    is_warning: bool = False
+    
+    def __str__(self) -> str:
+        status = "[OK]" if self.passed else ("[WARN]" if self.is_warning else "[FAIL]")
+        return f"{status} {self.check_name}: {self.message}"

@@ -66,7 +66,7 @@ class BackupManager:
         try:
             # Copy model directory
             shutil.copytree(model_path, backup_path)
-            self.logger.info(f"✓ Backup created: {backup_path}")
+            self.logger.info(f"[OK] Backup created: {backup_path}")
             
             # Clean old backups
             self._cleanup_old_backups()

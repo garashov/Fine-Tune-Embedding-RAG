@@ -52,19 +52,19 @@ class PostPushVerifier:
             # Check if repo exists
             self.logger.info(f"Checking repository: {repo_id}")
             repo_info = self.api.repo_info(repo_id)
-            self.logger.info(f"✓ Repository found: {repo_info.id}")
+            self.logger.info(f"[OK] Repository found: {repo_info.id}")
             
             # Test download if enabled
             if self.test_download:
                 self.logger.info("Testing model download...")
                 model = SentenceTransformer(repo_id)
-                self.logger.info("✓ Model downloaded and loaded successfully")
+                self.logger.info("[OK] Model downloaded and loaded successfully")
                 del model
             
-            self.logger.info("✓ Verification complete")
+            self.logger.info("[OK] Verification complete")
             return True
             
         except Exception as e:
-            self.logger.error(f"✗ Verification failed: {str(e)}")
+            self.logger.error(f"[FAIL] Verification failed: {str(e)}")
             return False
 

@@ -193,9 +193,9 @@ class PushPipeline:
         """Log completion message"""
         self.logger.info("\n" + "=" * 80)
         if result.success:
-            self.logger.info("✓ PUSH PIPELINE COMPLETED SUCCESSFULLY")
+            self.logger.info("[OK] PUSH PIPELINE COMPLETED SUCCESSFULLY")
         else:
-            self.logger.info("✗ PUSH PIPELINE FAILED")
+            self.logger.info("[FAIL] PUSH PIPELINE FAILED")
         self.logger.info("=" * 80)
         
         if result.duration_seconds:
