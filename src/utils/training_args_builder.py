@@ -2,7 +2,8 @@ import torch
 import logging
 from pathlib import Path
 from datetime import datetime
-from typing import Optional, Any
+from typing import Optional, Any, Tuple, List
+from transformers import EarlyStoppingCallback
 from sentence_transformers.training_args import BatchSamplers
 from sentence_transformers import SentenceTransformerTrainingArguments
 from sentence_transformers.evaluation import InformationRetrievalEvaluator
@@ -51,6 +52,9 @@ from src.config.config import (
     FT_TRAINING_LABEL_SMOOTHING_FACTOR,
     FT_TRAINING_PREDICTION_LOSS_ONLY,
     FT_EVALUATION_IR_NAME,
+    FT_MONITORING_EARLY_STOPPING_ENABLED,
+    FT_MONITORING_EARLY_STOPPING_PATIENCE,
+    FT_MONITORING_EARLY_STOPPING_MIN_DELTA,
 )
 
 
@@ -63,15 +67,16 @@ class TrainingArgumentsBuilder:
     def __init__(self, logger: Optional[logging.Logger] = None):
         """Initialize training arguments builder"""
         self.logger = logger or logging.getLogger(__name__)
+        self.early_stopping_callback = None
     
     def build(
         self,
         output_dir: Path,
         loss: Any,
         evaluator: Optional[InformationRetrievalEvaluator]
-    ) -> SentenceTransformerTrainingArguments:
+    ) -> Tuple[SentenceTransformerTrainingArguments, List]:
         """
-        Build training arguments
+        Build training arguments and callbacks
         
         Args:
             output_dir: Output directory
@@ -79,7 +84,7 @@ class TrainingArgumentsBuilder:
             evaluator: Optional evaluator
         
         Returns:
-            Configured training arguments
+            Tuple of (training arguments, list of callbacks)
         """
         self.logger.info("\n" + "=" * 80)
         self.logger.info("CREATING TRAINING ARGUMENTS")
@@ -115,6 +120,19 @@ class TrainingArgumentsBuilder:
         if not run_name:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             run_name = f"qwen3_embedding_finetune_{timestamp}"
+        
+        # Setup callbacks
+        callbacks = []
+        
+        # Early stopping callback
+        if FT_MONITORING_EARLY_STOPPING_ENABLED and evaluator:
+            self.early_stopping_callback = EarlyStoppingCallback(
+                early_stopping_patience=FT_MONITORING_EARLY_STOPPING_PATIENCE,
+                early_stopping_threshold=FT_MONITORING_EARLY_STOPPING_MIN_DELTA
+            )
+            callbacks.append(self.early_stopping_callback)
+            self.logger.info(f"Early stopping enabled: patience={FT_MONITORING_EARLY_STOPPING_PATIENCE}, "
+                           f"threshold={FT_MONITORING_EARLY_STOPPING_MIN_DELTA}")
         
         try:
             args = SentenceTransformerTrainingArguments(
@@ -169,7 +187,7 @@ class TrainingArgumentsBuilder:
                 # Data loading
                 dataloader_num_workers=FT_TRAINING_DATALOADER_NUM_WORKERS,
                 dataloader_pin_memory=FT_TRAINING_DATALOADER_PIN_MEMORY,
-                dataloader_prefetch_factor=FT_TRAINING_DATALOADER_PREFETCH_FACTOR,
+                dataloader_prefetch_factor=FT_TRAINING_DATALOADER_PREFETCH_FACTOR if FT_TRAINING_DATALOADER_NUM_WORKERS > 0 else None,
                 
                 # Reproducibility
                 seed=FT_TRAINING_SEED,
@@ -190,10 +208,10 @@ class TrainingArgumentsBuilder:
             self.logger.info(f"  Epochs: {FT_TRAINING_NUM_TRAIN_EPOCHS}")
             self.logger.info(f"  Train batch size: {FT_TRAINING_PER_DEVICE_TRAIN_BATCH_SIZE}")
             self.logger.info(f"  Learning rate: {FT_TRAINING_LEARNING_RATE}")
+            self.logger.info(f"  Callbacks: {len(callbacks)}")
             
-            return args
+            return args, callbacks
             
         except Exception as e:
             self.logger.error(f"Failed to create training arguments: {str(e)}", exc_info=True)
             raise
-

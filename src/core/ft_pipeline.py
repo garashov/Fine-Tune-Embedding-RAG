@@ -9,6 +9,9 @@ This module provides a robust fine-tuning framework with:
 - Evaluation during and after training
 - Modular components ready for extraction to utils
 """
+import warnings
+warnings.filterwarnings('ignore', message='Unexpected key')
+
 from pathlib import Path
 from datetime import datetime
 from sentence_transformers import SentenceTransformerTrainer
@@ -172,7 +175,7 @@ class FineTuningPipeline:
             loss = self.loss_factory.create_loss(sbert_model)
             
             # Step 7: Create training arguments
-            args = self.training_args_builder.build(self.output_dir, loss, evaluator)
+            args, callbacks = self.training_args_builder.build(self.output_dir, loss, evaluator)
             
             # Step 8: Initialize trainer
             self.logger.info("\n" + "=" * 80)
@@ -186,6 +189,7 @@ class FineTuningPipeline:
                 eval_dataset=test_dataset.select_columns(["anchor", "positive"]),
                 loss=loss,
                 evaluator=evaluator,
+                callbacks=callbacks,
             )
             self.logger.info("[OK] Trainer initialized")
             
