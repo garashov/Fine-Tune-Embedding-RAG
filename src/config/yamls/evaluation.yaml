@@ -1,6 +1,6 @@
 # Model Configuration
 model:
-  fine_tuned_path: "data/fine_tuning/20251204_173611/finetuned_qwen3_embedding"     # Path to your fine-tuned model (set to null if only evaluating baseline)
+  fine_tuned_path: "data/fine_tuning/20251205_132608/ft_custom_qwen3_embedding"     # Path to your fine-tuned model (set to null if only evaluating baseline)
   baseline_model: "Qwen/Qwen3-Embedding-0.6B"                                       # Baseline model to compare against
 
 # Evaluation Options
@@ -13,18 +13,18 @@ evaluation:
 
 # Data Source Configuration
 data_source:
-  use_local_eval_data: false            # Choose one: local_eval_data OR huggingface_dataset
-  use_huggingface_dataset: true         # Choose one: local_eval_data OR huggingface_dataset
-  local_eval_data:                      # Local evaluation data settings     
-    eval_data_dir: null                 # Path to evaluation data directory (null = auto-detect from model_path/eval_data)
-  huggingface_dataset:                  # HuggingFace dataset settings
+  use_local_eval_data: true                                                   # Choose one: local_eval_data OR huggingface_dataset
+  use_huggingface_dataset: false                                              # Choose one: local_eval_data OR huggingface_dataset
+  local_eval_data:                                                            # Local evaluation data settings     
+    eval_data_dir: "./data/datasets/custom_embedding_dataset"                 # Path to evaluation data directory (null = auto-detect from model_path/eval_data)
+  huggingface_dataset:                                                        # HuggingFace dataset settings
     dataset_name: "philschmid/finanical-rag-embedding-dataset"
     dataset_split: "train"
     test_size: 0.1
-    anchor_column: "question"           # Column names in the dataset
-    positive_column: "context"          # Column names in the dataset
-    max_samples: null                   # Optional: limit number of samples (null = use all)
-    seed: 42                            # Random seed for reproducibility
+    anchor_column: "question"                                                 # Column names in the dataset
+    positive_column: "context"                                                # Column names in the dataset
+    max_samples: null                                                         # Optional: limit number of samples (null = use all)
+    seed: 42                                                                  # Random seed for reproducibility
 
 # Evaluation Metrics Configuration
 metrics:

@@ -54,22 +54,55 @@ class EvaluatorFactory:
         if not eval_data_dir.exists():
             raise FileNotFoundError(f"Evaluation data directory not found: {eval_data_dir}")
         
-        # Load datasets
-        test_dataset = load_from_disk(str(eval_data_dir / "test_dataset"))
-        corpus_dataset = load_from_disk(str(eval_data_dir / "corpus_dataset"))
+        # Load the test dataset (which contains both anchor and positive)
+        try:
+            # Try loading as a DatasetDict first
+            from datasets import load_from_disk
+            dataset = load_from_disk(str(eval_data_dir))
+            
+            # Use test split if available, otherwise use train split
+            if "test" in dataset:
+                test_dataset = dataset["test"]
+            elif "train" in dataset:
+                test_dataset = dataset["train"]
+                if logger:
+                    logger.warning("No test split found, using train split for evaluation")
+            else:
+                raise ValueError("Dataset must contain either 'test' or 'train' split")
+            
+        except Exception as e:
+            if logger:
+                logger.error(f"Failed to load dataset: {str(e)}")
+            raise
         
         if logger:
             logger.info(f"Loaded {len(test_dataset)} test examples")
-            logger.info(f"Loaded {len(corpus_dataset)} corpus documents")
         
-        # Create corpus dictionary
-        corpus = dict(zip(corpus_dataset["id"], corpus_dataset["positive"]))
+        # Validate required columns
+        required_cols = {"id", "anchor", "positive"}
+        missing_cols = required_cols - set(test_dataset.column_names)
+        if missing_cols:
+            raise ValueError(f"Dataset missing required columns: {missing_cols}")
         
-        # Create queries dictionary
-        queries = dict(zip(test_dataset["id"], test_dataset["anchor"]))
+        # Create corpus dictionary (id -> positive text)
+        corpus = {}
+        for example in test_dataset:
+            doc_id = str(example["id"])
+            corpus[doc_id] = example["positive"]
         
-        # Create relevant documents mapping
-        relevant_docs = {q_id: [q_id] for q_id in queries}
+        # Create queries dictionary (id -> anchor text)
+        queries = {}
+        for example in test_dataset:
+            query_id = str(example["id"])
+            queries[query_id] = example["anchor"]
+        
+        # Create relevant documents mapping (query_id -> [doc_id])
+        # Since each query corresponds to exactly one document with the same ID
+        relevant_docs = {query_id: [query_id] for query_id in queries}
+        
+        if logger:
+            logger.info(f"Created corpus with {len(corpus)} documents")
+            logger.info(f"Created queries with {len(queries)} queries")
         
         # Configure score function
         score_functions = {"cosine": cos_sim} if score_function == "cosine" else {}
