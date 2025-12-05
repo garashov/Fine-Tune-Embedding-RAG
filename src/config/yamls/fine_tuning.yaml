@@ -1,41 +1,41 @@
 # Model Configuration
 model:
-  base_model_id: "Qwen/Qwen3-Embedding-0.6B"              # Base model identifier from HuggingFace Hub
-  max_seq_length: 512    # Maximum input sequence length
-  load_in_4bit: true  # Use 4-bit quantization for memory efficiency
-  trust_remote_code: true  # Required for Qwen models
-  dtype: null  # Options: null (auto), "float16", "bfloat16", "float32"
-  device_map: "auto"  # Options: "auto", "cuda:0", "cpu"
+  base_model_id: "Qwen/Qwen3-Embedding-0.6B"      # Base model identifier from HuggingFace Hub
+  max_seq_length: 512                             # Maximum input sequence length
+  load_in_4bit: true                              # Use 4-bit quantization for memory efficiency
+  trust_remote_code: true                         # Required for Qwen models
+  dtype: null                                     # Options: null (auto), "float16", "bfloat16", "float32"
+  device_map: "auto"                              # Options: "auto", "cuda:0", "cpu"
 
 # LoRA/QLoRA Configuration
 lora:
-  r: 16  # LoRA rank - controls adapter size and expressiveness. Common values: 8, 16, 32, 64
-  lora_alpha: 32  # LoRA alpha - scaling factor for adapter weights. Typically 2x the rank
-  lora_dropout: 0.0  # Dropout for LoRA layers. Range: 0.0 - 0.3
-  use_rslora: false  # Use Rank-Stabilized LoRA (RSLoRA)
-  target_modules:  # Target modules for LoRA adaptation
+  r: 16                       # LoRA rank - controls adapter size and expressiveness. Common values: 8, 16, 32, 64
+  lora_alpha: 32              # LoRA alpha - scaling factor for adapter weights. Typically 2x the rank
+  lora_dropout: 0.0           # Dropout for LoRA layers. Range: 0.0 - 0.3
+  use_rslora: false           # Use Rank-Stabilized LoRA (RSLoRA)
+  target_modules:             # Target modules for LoRA adaptation
     - "q_proj"
     - "k_proj"
     - "v_proj"
     - "o_proj"
-  exclude_modules: []    # Modules to exclude from LoRA
-  bias: "none"  # Bias handling. Options: "none", "all", "lora_only"
+  exclude_modules: []                     # Modules to exclude from LoRA
+  bias: "none"                            # Bias handling. Options: "none", "all", "lora_only"
   task_type: "FEATURE_EXTRACTION"
-  use_gradient_checkpointing: "unsloth"  # Gradient checkpointing Options: "unsloth", true, false
-  modules_to_save: null  # Modules to save (in addition to LoRA). null or list of module names
+  use_gradient_checkpointing: "unsloth"   # Gradient checkpointing Options: "unsloth", true, false
+  modules_to_save: null                   # Modules to save (in addition to LoRA). null or list of module names
 
 # Training Configuration
 training:         
   # Core training parameters  
-  num_train_epochs: 4              
+  num_train_epochs: 15
   per_device_train_batch_size: 16
   per_device_eval_batch_size: 32
   gradient_accumulation_steps: 8
   # Learning rate settings
-  learning_rate: 0.0002  # 2e-4
-  lr_scheduler_type: "cosine"  # Options: "linear", "cosine", "constant", "polynomial"
-  warmup_ratio: 0.1  # Proportion of training for warmup
-  warmup_steps: null  # Alternative to warmup_ratio (null = use ratio)
+  learning_rate: 0.0001               # 1e-4
+  lr_scheduler_type: "cosine"         # Options: "linear", "cosine", "constant", "polynomial"
+  warmup_ratio: 0.1                   # Proportion of training for warmup
+  warmup_steps: null                  # Alternative to warmup_ratio (null = use ratio)
   # Optimizer settings
   optimizer: "adamw_torch_fused"  # Options: "adamw_torch", "adamw_torch_fused", "adamw_8bit", "sgd"
   weight_decay: 0.1
@@ -44,18 +44,18 @@ training:
   adam_epsilon: 1.0e-8
   max_grad_norm: 1.0
   # Evaluation and checkpointing
-  eval_strategy: "steps"  # Options: "no", "steps", "epoch"
-  eval_steps: 50  # Evaluate every N steps
-  eval_delay: 0  # Delay evaluation for N steps
-  save_strategy: "steps"  # Options: "no", "steps", "epoch"
-  save_steps: 50  # Save checkpoint every N steps
-  save_total_limit: 3  # Keep only N most recent checkpoints
+  eval_strategy: "epoch"              # Options: "no", "steps", "epoch"
+  eval_steps: null                    # Evaluate every N steps
+  eval_delay: 0                       # Delay evaluation for N steps
+  save_strategy: "epoch"              # Options: "no", "steps", "epoch"
+  save_steps: null                    # Save checkpoint every N steps
+  save_total_limit: 3                 # Keep only N most recent checkpoints
   # Best model tracking
   load_best_model_at_end: true
   metric_for_best_model: "eval_ir-eval_cosine_ndcg@10"
   greater_is_better: true
   # Logging
-  logging_steps: 20
+  logging_steps: 5
   logging_first_step: true
   logging_strategy: "steps"
   # Output and reporting
