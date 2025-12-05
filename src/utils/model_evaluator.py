@@ -156,12 +156,26 @@ class ModelEvaluator:
         """Clean up model and free memory"""
         if model is not None:
             self.logger.info("Cleaning up model from memory...")
+            
+            # Move model to CPU first (important!)
+            try:
+                model = model.to('cpu')
+            except:
+                pass
+            
+            # Delete the model
             del model
         
+        # Force garbage collection (do this regardless)
         if self.force_gc:
             GPUMemoryManager.force_garbage_collection()
         
+        # Clear CUDA cache (do this regardless)
         if self.clear_cuda_cache and GPUMemoryManager.is_available():
             GPUMemoryManager.clear_cache()
+            
+            # Force synchronization
+            torch.cuda.synchronize()
+            
             self._log_gpu_memory("after cleanup")
 

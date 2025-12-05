@@ -40,6 +40,8 @@ class GPUMemoryManager:
             GPUMemoryManager.force_garbage_collection()
         if clear_cache and GPUMemoryManager.is_available():
             GPUMemoryManager.clear_cache()
+            torch.cuda.synchronize()
+            torch.cuda.reset_peak_memory_stats()
     
     @staticmethod
     def get_device(preferred_device: Optional[str] = None) -> str:

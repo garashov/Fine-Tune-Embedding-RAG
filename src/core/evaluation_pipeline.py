@@ -248,7 +248,7 @@ class EvaluationPipeline:
         if key_metric in comparison.improvements:
             info = comparison.improvements[key_metric]
             self.logger.info(
-                f"NDCG@10: {info['baseline']:.4f} → {info['fine_tuned']:.4f} "
+                f"NDCG@10: {info['baseline']:.4f} -> {info['fine_tuned']:.4f} "
                 f"({info['relative_improvement_percent']:+.2f}%)"
             )
     

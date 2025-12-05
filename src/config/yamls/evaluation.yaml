@@ -1,6 +1,6 @@
 # Model Configuration
 model:
-  fine_tuned_path: "data/fine_tuning/20251203_114114/finetuned_qwen3_embedding"     # Path to your fine-tuned model (set to null if only evaluating baseline)
+  fine_tuned_path: "data/fine_tuning/20251204_173611/finetuned_qwen3_embedding"     # Path to your fine-tuned model (set to null if only evaluating baseline)
   baseline_model: "Qwen/Qwen3-Embedding-0.6B"                                       # Baseline model to compare against
 
 # Evaluation Options
