@@ -30,7 +30,7 @@ huggingface_hub:
 authentication:
   use_auth_token: true  # Use HuggingFace authentication token
   token_source: "env"  # Token source: "cli" (from huggingface-cli login) or "env" (from HF_TOKEN env var)
-  token_env_var: "HF_TOKEN" # Environment variable name (only used if token_source is "env")
+  token_env_var: $HF_TOKEN| # Environment variable name (only used if token_source is "env")
 
 # Upload Configuration
 upload:
