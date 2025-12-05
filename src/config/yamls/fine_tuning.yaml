@@ -59,7 +59,7 @@ training:
   logging_first_step: true
   logging_strategy: "steps"
   # Output and reporting
-  output_dir: "data/fine_tuning/{timestamp}/finetuned_qwen3_embedding"
+  output_dir: "data/fine_tuning/{timestamp}/ft_custom_qwen3_embedding"
   run_name: null  # null for auto-generated name
   report_to:
     - "tensorboard"
@@ -88,13 +88,14 @@ training:
 # Dataset Configuration
 dataset:
   # Dataset source
-  dataset_name: "philschmid/finanical-rag-embedding-dataset"
+  dataset_name: "./data/datasets/custom_embedding_dataset"          # Local path
+  # dataset_name: "philschmid/finanical-rag-embedding-dataset"      # HuggingFace dataset identifier
   dataset_split: "train"
   # Train/test split
   test_size: 0.1  # Proportion for test set
   # Column mapping
-  anchor_column: "question"  # Column containing queries/anchors
-  positive_column: "context"  # Column containing positive examples
+  anchor_column: "anchor"          # Column containing queries/anchors
+  positive_column: "positive"      # Column containing positive examples
   # Data preprocessing
   shuffle_train: true
   shuffle_seed: 42

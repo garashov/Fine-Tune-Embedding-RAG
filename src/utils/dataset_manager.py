@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 from typing import Optional, Tuple
-from datasets import load_dataset, concatenate_datasets, Dataset
+from datasets import load_dataset, concatenate_datasets, Dataset, load_from_disk
 
 from src.config.config import (
     FT_TRAINING_SEED,
@@ -33,7 +33,7 @@ class DatasetManager:
     
     def load_dataset(self) -> Tuple[Dataset, Dataset, Dataset]:
         """
-        Load and prepare the training dataset
+        Load and prepare the training dataset from HuggingFace Hub or local path
         
         Returns:
             Tuple of (train_dataset, test_dataset, corpus_dataset)
@@ -41,26 +41,89 @@ class DatasetManager:
         self.logger.info("=" * 80)
         self.logger.info("LOADING DATASET")
         self.logger.info("=" * 80)
-        self.logger.info(f"Dataset: {FT_DATASET_DATASET_NAME}")
-        self.logger.info(f"Split: {FT_DATASET_DATASET_SPLIT}")
+        
+        dataset_source = FT_DATASET_DATASET_NAME
         
         try:
-            # Load dataset
-            dataset = load_dataset(
-                FT_DATASET_DATASET_NAME,
-                split=FT_DATASET_DATASET_SPLIT,
-                cache_dir=FT_DATASET_CACHE_DIR,
-                keep_in_memory=FT_DATASET_KEEP_IN_MEMORY
-            )
+            # Check if it's a local path
+            source_path = Path(dataset_source)
             
+            if source_path.exists():
+                self.logger.info(f"Source: Local path")
+                self.logger.info(f"Path: {source_path.resolve()}")
+                
+                # Check if it's a save_to_disk format (has dataset_info.json or state.json)
+                is_dataset_dict = (source_path / "dataset_dict.json").exists()
+                is_dataset = (source_path / "dataset_info.json").exists() or (source_path / "state.json").exists()
+                
+                if is_dataset_dict:
+                    # It's a DatasetDict saved with save_to_disk()
+                    self.logger.info("Format: HuggingFace DatasetDict (load_from_disk)")
+                    dataset_dict = load_from_disk(str(source_path))
+                    
+                    # Extract the requested split
+                    if FT_DATASET_DATASET_SPLIT and FT_DATASET_DATASET_SPLIT in dataset_dict:
+                        dataset = dataset_dict[FT_DATASET_DATASET_SPLIT]
+                        self.logger.info(f"Using split: {FT_DATASET_DATASET_SPLIT}")
+                    else:
+                        available_splits = list(dataset_dict.keys())
+                        self.logger.warning(f"Split '{FT_DATASET_DATASET_SPLIT}' not found. Available: {available_splits}")
+                        dataset = dataset_dict[available_splits[0]]
+                        self.logger.info(f"Using first available split: {available_splits[0]}")
+                
+                elif is_dataset:
+                    # It's a single Dataset saved with save_to_disk()
+                    self.logger.info("Format: HuggingFace Dataset (load_from_disk)")
+                    dataset = load_from_disk(str(source_path))
+                
+                else:
+                    # Let HF auto-detect format (CSV, JSON, Parquet, etc.)
+                    self.logger.info("Format: Auto-detected by HuggingFace")
+                    dataset = load_dataset(
+                        str(source_path),
+                        split=FT_DATASET_DATASET_SPLIT,
+                        cache_dir=FT_DATASET_CACHE_DIR,
+                        keep_in_memory=FT_DATASET_KEEP_IN_MEMORY
+                    )
+            else:
+                self.logger.info(f"Source: HuggingFace Hub")
+                self.logger.info(f"Dataset: {dataset_source}")
+                self.logger.info(f"Split: {FT_DATASET_DATASET_SPLIT}")
+                
+                dataset = load_dataset(
+                    dataset_source,
+                    split=FT_DATASET_DATASET_SPLIT,
+                    cache_dir=FT_DATASET_CACHE_DIR,
+                    keep_in_memory=FT_DATASET_KEEP_IN_MEMORY
+                )
+        
             self.logger.info(f"[OK] Loaded {len(dataset)} examples")
+            self.logger.info(f"Columns: {dataset.column_names}")
             
-            # Rename columns
-            dataset = dataset.rename_column(FT_DATASET_ANCHOR_COLUMN, "anchor")
-            dataset = dataset.rename_column(FT_DATASET_POSITIVE_COLUMN, "positive")
+            # Rename columns only if needed
+            if FT_DATASET_ANCHOR_COLUMN != "anchor" and FT_DATASET_ANCHOR_COLUMN in dataset.column_names:
+                dataset = dataset.rename_column(FT_DATASET_ANCHOR_COLUMN, "anchor")
+                self.logger.info(f"Renamed '{FT_DATASET_ANCHOR_COLUMN}' -> 'anchor'")
+
+            if FT_DATASET_POSITIVE_COLUMN != "positive" and FT_DATASET_POSITIVE_COLUMN in dataset.column_names:
+                dataset = dataset.rename_column(FT_DATASET_POSITIVE_COLUMN, "positive")
+                self.logger.info(f"Renamed '{FT_DATASET_POSITIVE_COLUMN}' -> 'positive'")
+                
+            # Validate required columns exist
+            if "anchor" not in dataset.column_names or "positive" not in dataset.column_names:
+                raise ValueError(
+                    f"Dataset must contain 'anchor' and 'positive' columns. "
+                    f"Found: {dataset.column_names}. "
+                    f"Check your anchor_column ('{FT_DATASET_ANCHOR_COLUMN}') and "
+                    f"positive_column ('{FT_DATASET_POSITIVE_COLUMN}') settings."
+                )
             
-            # Add ID column
-            dataset = dataset.add_column("id", range(len(dataset)))
+            # Add ID column only if it doesn't exist
+            if "id" not in dataset.column_names:
+                dataset = dataset.add_column("id", range(len(dataset)))
+                self.logger.info("Added 'id' column")
+            else:
+                self.logger.info("'id' column already exists, skipping")
             
             # Shuffle if configured
             if FT_DATASET_SHUFFLE_TRAIN:
@@ -122,3 +185,14 @@ class DatasetManager:
         
         self.logger.info(f"[OK] Evaluation data saved to: {eval_data_dir}")
 
+
+# ----------------------------
+# Example of usage
+# ----------------------------
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger("DatasetManagerExample")
+    
+    dataset_manager = DatasetManager(logger=logger)
+    
+    train_ds, test_ds, corpus_ds = dataset_manager.load_dataset()
