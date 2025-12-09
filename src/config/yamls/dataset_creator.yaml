@@ -1,0 +1,139 @@
+# Input Configuration
+input:
+  # Source file settings
+  file_path: "data/raw/training_data.csv"
+  file_format: "csv"  # Options: "csv", "json", "jsonl", "parquet"
+  
+  # CSV-specific settings
+  csv:
+    delimiter: ","
+    encoding: "utf-8"
+    header: true
+    
+  # Column mapping (required)
+  columns:
+    anchor: "question"      # Query/question column name
+    positive: "context"     # Context/answer column name
+    negative: null          # Optional negative examples column
+  
+  # Data validation
+  validation:
+    check_duplicates: true
+    check_empty: true
+    min_anchor_length: 3    # Minimum characters in anchor
+    min_positive_length: 10 # Minimum characters in positive
+    max_anchor_length: 512  # Maximum characters
+    max_positive_length: 2048
+
+# Processing Configuration
+processing:
+  # Data cleaning
+  cleaning:
+    strip_whitespace: true
+    remove_empty_lines: true
+    normalize_spaces: true  # Multiple spaces -> single space
+    lowercase: false        # Convert to lowercase (usually False for embeddings)
+  
+  # Data augmentation (optional)
+  augmentation:
+    enabled: false
+    techniques:
+      - "paraphrase"      # Generate paraphrases of queries
+      - "backtranslation" # Translate and back-translate
+    augmentation_ratio: 0.2  # Add 20% augmented samples
+  
+  # Filtering
+  filtering:
+    remove_duplicates: true
+    min_samples: 10         # Minimum dataset size
+    max_samples: null       # Limit dataset size (null = no limit)
+  
+  # Splitting
+  splitting:
+    test_size: 0.1          # 10% for test
+    validation_size: 0.0    # 0% for validation (optional)
+    shuffle: true
+    seed: 42
+    stratify: false         # Stratify split (if applicable)
+
+# Output Configuration
+output:
+  # Output directory
+  output_dir: "data/processed/datasets"
+  dataset_name: "custom_embedding_dataset"
+  
+  # Output format
+  format: "huggingface"  # Options: "huggingface", "csv", "json", "parquet"
+  
+  # Save splits separately
+  save_splits_separately: true  # Save train/test as separate files
+  
+  # Metadata
+  save_metadata: true
+  metadata_filename: "dataset_info.json"
+  
+  # Statistics
+  generate_statistics: true
+  statistics_filename: "dataset_stats.json"
+
+# HuggingFace Dataset Configuration
+huggingface_dataset:
+  # Features schema
+  features:
+    id: "int64"
+    anchor: "string"
+    positive: "string"
+    negative: "string"  # Optional
+  
+  # Dataset card (README.md)
+  create_dataset_card: true
+  dataset_card:
+    description: "Custom embedding dataset for fine-tuning"
+    language: "en"
+    task: "sentence-similarity"
+    tags:
+      - "embeddings"
+      - "sentence-transformers"
+  
+  # Compression
+  compression: null  # Options: null, "gzip", "bz2", "xz"
+
+# Quality Checks
+quality_checks:
+  enabled: true
+  checks:
+    - "check_length_distribution"
+    - "check_duplicate_rate"
+    - "check_overlap"           # Check train/test overlap
+    - "check_balance"           # Check class balance (if applicable)
+  
+  # Thresholds
+  thresholds:
+    max_duplicate_rate: 0.05    # Max 5% duplicates
+    max_train_test_overlap: 0.01 # Max 1% overlap
+
+# Logging Configuration
+logging:
+  level: "INFO"
+  save_to_file: true
+  log_dir: "data/logs"
+  log_filename: "dataset_creation_{timestamp}.log"
+  
+  console_format: "%(asctime)s - %(levelname)s - %(message)s"
+  console_date_format: "%Y-%m-%d %H:%M:%S"
+  file_format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+# Advanced Options
+advanced:
+  # Memory management
+  chunk_size: 10000           # Process data in chunks (for large files)
+  use_multiprocessing: false  # Use multiple processes
+  num_workers: 4
+  
+  # Caching
+  cache_processed_data: true
+  cache_dir: "data/cache"
+  
+  # Reproducibility
+  set_seed: true
+  seed: 42

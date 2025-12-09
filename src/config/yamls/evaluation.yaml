@@ -1,7 +1,7 @@
 # Model Configuration
 model:
-  fine_tuned_path: "data/fine_tuning/20251205_132608/ft_custom_qwen3_embedding"     # Path to your fine-tuned model (set to null if only evaluating baseline)
-  baseline_model: "Qwen/Qwen3-Embedding-0.6B"                                       # Baseline model to compare against
+  fine_tuned_path: "data/fine_tuning/20251205_160130/ft_custom_mxbai-embed-large-v1_embedding"     # Path to your fine-tuned model (set to null if only evaluating baseline)
+  baseline_model: "mixedbread-ai/mxbai-embed-large-v1"                                       # Baseline model to compare against
 
 # Evaluation Options
 evaluation:
